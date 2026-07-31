@@ -14,7 +14,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 
 COPY backend/ .
 
-RUN php artisan package:discover --ansi && \
+RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/views && \
+    chmod -R 775 bootstrap/cache storage && \
+    php artisan package:discover --ansi && \
     php artisan storage:link --force
 
 COPY backend/nginx.conf /etc/nginx/sites-enabled/default
