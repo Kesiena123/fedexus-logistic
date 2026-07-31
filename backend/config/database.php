@@ -1,7 +1,9 @@
 <?php
 
+$dbUrl = parse_url(env('DATABASE_URL'));
+
 return [
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', $dbUrl ? 'pgsql' : 'mysql'),
     'connections' => [
         'mysql' => [
             'driver' => 'mysql',
@@ -14,6 +16,16 @@ return [
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
             'strict' => true,
+        ],
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'host' => $dbUrl['host'] ?? env('DB_HOST', '127.0.0.1'),
+            'port' => $dbUrl['port'] ?? env('DB_PORT', '5432'),
+            'database' => ltrim($dbUrl['path'] ?? '', '/') ?: env('DB_DATABASE', 'freightflow'),
+            'username' => $dbUrl['user'] ?? env('DB_USERNAME', 'root'),
+            'password' => $dbUrl['pass'] ?? env('DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
         ],
     ],
     'redis' => [

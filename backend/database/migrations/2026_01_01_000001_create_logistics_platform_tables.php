@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone')->nullable();
             $table->string('company')->nullable();
-            $table->enum('role', ['super_admin', 'admin', 'manager', 'support', 'warehouse', 'driver', 'customer'])->default('customer')->index();
+            $table->string('role', 30)->default('customer')->index();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('email_verification_code')->nullable();
             $table->string('password_reset_token')->nullable()->index();
@@ -44,7 +44,7 @@ return new class extends Migration
             $table->foreignId('driver_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('warehouse_id')->nullable()->constrained()->nullOnDelete();
             $table->string('tracking_number')->nullable()->unique();
-            $table->enum('status', ['shipment_requested', 'admin_review', 'approved', 'rejected', 'booked', 'pickup_scheduled', 'picked_up', 'warehouse_processing', 'international_processing', 'destination_hub', 'out_for_delivery', 'delivered', 'paused', 'exception', 'cancelled'])->default('shipment_requested')->index();
+            $table->string('status', 40)->default('shipment_requested')->index();
             $table->string('service_level')->index();
             $table->string('sender_name');
             $table->string('recipient_name');
@@ -78,7 +78,7 @@ return new class extends Migration
             $table->string('label');
             $table->decimal('percentage', 5, 2)->default(20);
             $table->decimal('amount', 12, 2);
-            $table->enum('status', ['locked', 'pending', 'checkout_created', 'paid', 'verified', 'failed', 'rejected', 'refunded'])->default('locked')->index();
+            $table->string('status', 30)->default('locked')->index();
             $table->string('provider')->nullable();
             $table->string('provider_reference')->nullable();
             $table->timestamp('paid_at')->nullable();
@@ -92,12 +92,12 @@ return new class extends Migration
         Schema::create('shipment_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('shipment_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', ['pickup', 'delivery'])->index();
+            $table->string('type', 20)->index();
             $table->timestamp('window_start')->nullable();
             $table->timestamp('window_end')->nullable();
             $table->json('address');
             $table->text('instructions')->nullable();
-            $table->enum('status', ['scheduled', 'confirmed', 'completed', 'missed', 'cancelled'])->default('scheduled');
+            $table->string('status', 30)->default('scheduled');
             $table->timestamps();
         });
 
@@ -106,9 +106,9 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('shipment_id')->nullable()->constrained()->nullOnDelete();
             $table->string('subject');
-            $table->enum('category', ['delivery', 'billing', 'customs', 'damage', 'account', 'other'])->default('other');
-            $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal')->index();
-            $table->enum('status', ['open', 'pending', 'resolved', 'closed'])->default('open')->index();
+            $table->string('category', 30)->default('other');
+            $table->string('priority', 20)->default('normal')->index();
+            $table->string('status', 20)->default('open')->index();
             $table->text('body');
             $table->timestamps();
         });
@@ -116,7 +116,7 @@ return new class extends Migration
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('shipment_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('type', ['support', 'admin', 'shipment', 'internal'])->default('support')->index();
+            $table->string('type', 20)->default('support')->index();
             $table->string('subject')->nullable();
             $table->timestamps();
         });

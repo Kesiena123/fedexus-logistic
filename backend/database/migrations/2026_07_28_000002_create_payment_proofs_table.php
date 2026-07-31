@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('file_type', 20);
             $table->unsignedBigInteger('file_size')->default(0);
             $table->string('original_filename');
-            $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending')->index();
+            $table->string('status', 20)->default('pending')->index();
             $table->timestamp('verified_at')->nullable();
             $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('rejection_reason')->nullable();

@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('provider_reference')->nullable();
             $table->decimal('amount', 12, 2)->nullable();
             $table->string('currency', 8)->nullable();
-            $table->enum('previous_status', ['payment_required', 'payment_initiated', 'awaiting_verification', 'initiated', 'pending', 'processing', 'paid', 'verified', 'failed', 'cancelled', 'refunded', 'expired'])->nullable();
-            $table->enum('new_status', ['payment_required', 'payment_initiated', 'awaiting_verification', 'initiated', 'pending', 'processing', 'paid', 'verified', 'failed', 'cancelled', 'refunded', 'expired'])->nullable();
+            $table->string('previous_status', 30)->nullable();
+            $table->string('new_status', 30)->nullable();
             $table->foreignId('admin_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent', 500)->nullable();

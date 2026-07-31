@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('shipment_id')->constrained()->cascadeOnDelete();
             $table->unsignedSmallInteger('sort_order')->default(0)->index();
-            $table->enum('type', ['origin', 'facility', 'checkpoint', 'customs', 'destination'])->default('checkpoint')->index();
+            $table->string('type', 20)->default('checkpoint')->index();
             $table->string('label', 160);
             $table->string('location', 255);
             $table->decimal('latitude', 10, 7)->nullable();
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->string('currency', 8)->default('USD')->index();
             $table->string('requested_method')->nullable()->index();
-            $table->enum('status', ['payment_required', 'payment_initiated', 'awaiting_verification', 'paid', 'verified', 'cancelled', 'expired', 'failed'])->default('payment_required')->index();
+            $table->string('status', 30)->default('payment_required')->index();
             $table->string('secure_token', 96)->unique();
             $table->timestamp('due_at')->nullable();
             $table->timestamp('paid_at')->nullable();
@@ -53,7 +53,7 @@ return new class extends Migration
             $table->string('provider_reference')->nullable()->index();
             $table->decimal('amount', 12, 2);
             $table->string('currency', 8)->default('USD');
-            $table->enum('status', ['initiated', 'pending', 'paid', 'verified', 'failed', 'cancelled'])->default('initiated')->index();
+            $table->string('status', 20)->default('initiated')->index();
             $table->json('provider_payload')->nullable();
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
@@ -67,7 +67,7 @@ return new class extends Migration
             $table->string('guest_email', 180)->nullable();
             $table->string('guest_phone', 60)->nullable();
             $table->string('subject', 180)->nullable();
-            $table->enum('status', ['open', 'pending', 'closed'])->default('open')->index();
+            $table->string('status', 20)->default('open')->index();
             $table->string('secure_token', 96)->unique();
             $table->timestamp('last_guest_message_at')->nullable();
             $table->timestamp('last_admin_message_at')->nullable();
@@ -79,7 +79,7 @@ return new class extends Migration
         Schema::create('guest_chat_messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('guest_chat_conversation_id')->constrained()->cascadeOnDelete();
-            $table->enum('sender_type', ['guest', 'admin', 'system'])->index();
+            $table->string('sender_type', 20)->index();
             $table->foreignId('admin_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->text('body');
             $table->json('attachments')->nullable();

@@ -14,7 +14,7 @@ return new class extends Migration
             $table->text('api_key')->nullable();
             $table->text('secret_key')->nullable();
             $table->text('public_key')->nullable();
-            $table->enum('mode', ['test', 'live'])->default('test')->index();
+            $table->string('mode', 10)->default('test')->index();
             $table->string('currency', 8)->default('USD')->index();
             $table->boolean('is_active')->default(false)->index();
             $table->timestamps();

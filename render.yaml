@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fedexus-logistic
+    runtime: docker
+    repo: https://github.com/Kesiena123/fedexus-logistic.git
+    dockerfilePath: backend/Dockerfile
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        value: https://fedexus-logistic.onrender.com
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fedexus-db
+          property: connectionString
+
+databases:
+  - name: fedexus-db
+    databaseName: fedexus
+    plan: free
