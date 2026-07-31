@@ -18,6 +18,7 @@ backend/storage/framework/views/
 backend/storage/framework/testing/
 backend/storage/logs/
 public/storage/
+backend/bootstrap/cache/
 .DS_Store
 Thumbs.db
 *.log
