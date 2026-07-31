@@ -10,11 +10,12 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html/backend
 
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 COPY backend/ .
 
-RUN php artisan storage:link --force
+RUN php artisan package:discover --ansi && \
+    php artisan storage:link --force
 
 COPY backend/nginx.conf /etc/nginx/sites-enabled/default
 COPY backend/supervisord.conf /etc/supervisor/conf.d/laravel.conf
