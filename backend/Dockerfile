@@ -17,6 +17,8 @@ COPY backend/ .
 RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs && \
     chown -R www-data:www-data bootstrap/cache storage && \
     chmod -R 775 bootstrap/cache storage && \
+    touch storage/logs/laravel.log && \
+    chown www-data:www-data storage/logs/laravel.log && \
     php artisan package:discover --ansi && \
     php artisan storage:link --force
 
