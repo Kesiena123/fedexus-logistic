@@ -14,7 +14,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 
 COPY backend/ .
 
-RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/views && \
+RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs && \
+    chown -R www-data:www-data bootstrap/cache storage && \
     chmod -R 775 bootstrap/cache storage && \
     php artisan package:discover --ansi && \
     php artisan storage:link --force
