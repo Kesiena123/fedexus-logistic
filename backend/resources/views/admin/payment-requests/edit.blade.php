@@ -93,6 +93,15 @@
                 <textarea name="internal_notes" rows="3" class="focus-ring w-full rounded-md border border-yellow-200 px-3 py-2 text-sm">{{ old('internal_notes', $paymentRequest->internal_notes) }}</textarea>
             </div>
 
+            @if($paymentRequest->isCompleted())
+                <div class="rounded-md border border-amber-300 bg-amber-50 p-4">
+                    <label class="flex cursor-pointer items-start gap-2 text-sm text-amber-800">
+                        <input type="checkbox" name="force" value="1" class="mt-0.5 rounded border-amber-400 text-amber-600">
+                        <span><strong>This payment request is completed.</strong> Editing it will change a record that was already paid/verified. Check this box to save changes anyway.</span>
+                    </label>
+                </div>
+            @endif
+
             <div class="flex items-center gap-3">
                 <button class="focus-ring min-h-11 rounded-md bg-[#0d5368] px-8 text-sm font-bold text-white hover:bg-[#0b4658]">Update Payment Request</button>
                 <a href="{{ route('admin.payment-requests.show', $paymentRequest->id) }}" class="focus-ring min-h-11 flex items-center rounded-md border border-slate-200 px-5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>

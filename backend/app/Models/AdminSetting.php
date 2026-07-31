@@ -26,9 +26,15 @@ class AdminSetting extends Model
         return self::orderBy('sort_order')->get()->groupBy('group')->toArray();
     }
 
+    protected static array $settingsCache;
+
     public static function value(string $key, mixed $default = null): mixed
     {
-        $setting = self::where('key', $key)->first();
+        if (! isset(self::$settingsCache)) {
+            self::$settingsCache = self::orderBy('sort_order')->get()->keyBy('key')->all();
+        }
+
+        $setting = self::$settingsCache[$key] ?? null;
         if (! $setting) {
             return $default;
         }

@@ -27,3 +27,7 @@ cookies.txt
 response_headers.txt
 promt*.txt
 WEBSITE_FEATURES.txt
+MySQL Connection Details.txt
+*.sql
+backend/public/hot
+backend/storage/app/public/
