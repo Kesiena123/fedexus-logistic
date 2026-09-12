@@ -4,6 +4,8 @@ services:
     runtime: docker
     repo: https://github.com/Kesiena123/fedexus-logistic.git
     dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
     envVars:
       - key: APP_ENV
         value: production

@@ -9,6 +9,9 @@ use App\Http\Controllers\PaymentRequestController;
 use App\Http\Controllers\SupportTicketController;
 use Illuminate\Support\Facades\Route;
 
+// ---- HEALTH CHECK (no DB) ----
+Route::get('/up', fn () => response('ok'))->name('health');
+
 // ---- PUBLIC PAGES ----
 Route::get('/', [BladeFrontendController::class, 'home'])->name('home');
 Route::get('/about', [BladeFrontendController::class, 'about'])->name('about');
