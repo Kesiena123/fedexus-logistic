@@ -3,7 +3,7 @@ services:
     name: fedexus-logistic
     runtime: docker
     repo: https://github.com/Kesiena123/fedexus-logistic.git
-    dockerfilePath: backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /up
     envVars:
