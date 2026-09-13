@@ -353,7 +353,7 @@ class AdminShipmentOperations extends Component
                 ]);
             }
 
-            ShipmentUpdated::dispatch($shipment);
+            ShipmentUpdated::dispatchSafely($shipment);
 
             $this->auditLogger->log(
                 request(),
@@ -419,7 +419,7 @@ class AdminShipmentOperations extends Component
                 'metadata' => $metadata,
             ]);
 
-            ShipmentUpdated::dispatch($shipment);
+            ShipmentUpdated::dispatchSafely($shipment);
 
             $this->auditLogger->log(
                 request(),
@@ -453,7 +453,7 @@ class AdminShipmentOperations extends Component
 
             $shipment->update(['tracking_number' => $newTracking]);
 
-            ShipmentUpdated::dispatch($shipment);
+            ShipmentUpdated::dispatchSafely($shipment);
 
             $this->auditLogger->log(
                 request(),
@@ -487,7 +487,7 @@ class AdminShipmentOperations extends Component
             $unlocked = $this->paymentStageService->unlockNextStage($shipment);
 
             if ($unlocked) {
-                ShipmentUpdated::dispatch($shipment);
+                ShipmentUpdated::dispatchSafely($shipment);
 
                 $this->auditLogger->log(
                     request(),

@@ -51,7 +51,7 @@ class ShipmentAttachmentController extends Controller
             ],
         ]);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json([
             'attachment' => $this->transformAttachment($attachment),
@@ -88,7 +88,7 @@ class ShipmentAttachmentController extends Controller
         Storage::disk($attachment->disk)->delete($attachment->path);
         $attachment->delete();
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json(['message' => 'Attachment deleted.']);
     }

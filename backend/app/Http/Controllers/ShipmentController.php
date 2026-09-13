@@ -142,7 +142,7 @@ class ShipmentController extends Controller
             ],
         ]);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json(['shipment' => $shipment->load(['payments', 'trackingEvents'])], 201);
     }
@@ -278,7 +278,7 @@ class ShipmentController extends Controller
             'new_values' => $changed ?: ['status' => $shipment->status],
         ]);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json(['shipment' => $shipment->fresh(['payments', 'trackingEvents', 'attachments'])]);
     }
@@ -336,7 +336,7 @@ class ShipmentController extends Controller
         ]);
         $this->storeRoutePointFromTrackingData($shipment, $data);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         ShipmentDraft::where('admin_user_id', $request->user()->id)->delete();
 
@@ -388,7 +388,7 @@ class ShipmentController extends Controller
 
         $notificationStatuses = $this->dispatchTrackingNotifications($shipment->fresh(['user']), $notifications);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json([
             'shipment' => $shipment->fresh(['payments', 'trackingEvents']),
@@ -431,7 +431,7 @@ class ShipmentController extends Controller
             ],
         ]);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json(['shipment' => $shipment->fresh(['payments', 'trackingEvents'])]);
     }
@@ -455,7 +455,7 @@ class ShipmentController extends Controller
             'occurred_at' => now(),
         ]);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json(['shipment' => $shipment->fresh(['payments', 'trackingEvents'])]);
     }
@@ -497,7 +497,7 @@ class ShipmentController extends Controller
         ]);
         $this->storeRoutePointFromTrackingData($shipment, $data + ['status' => $eventStatus]);
 
-        event(new ShipmentUpdated($shipment));
+        ShipmentUpdated::dispatchSafely($shipment);
 
         return response()->json([
             'event' => $event,

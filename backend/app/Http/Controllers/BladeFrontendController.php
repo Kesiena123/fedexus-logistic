@@ -235,7 +235,7 @@ class BladeFrontendController extends Controller
                     'previous_values' => $prev,
                     'new_values' => ['status' => 'approved', 'tracking_number' => $newTracking],
                 ]);
-                event(new ShipmentUpdated($shipment));
+                ShipmentUpdated::dispatchSafely($shipment);
 
                 return response()->json(['message' => 'Shipment approved.', 'tracking_number' => $shipment->tracking_number]);
             }
@@ -259,7 +259,7 @@ class BladeFrontendController extends Controller
                     'previous_values' => $prev,
                     'new_values' => ['status' => 'rejected'],
                 ]);
-                event(new ShipmentUpdated($shipment));
+                ShipmentUpdated::dispatchSafely($shipment);
 
                 return response()->json(['message' => 'Shipment rejected.']);
             }
@@ -484,7 +484,7 @@ class BladeFrontendController extends Controller
                 'new_values' => ['status' => $shipment->status, 'location' => $event->location],
             ]);
 
-            event(new ShipmentUpdated($shipment));
+            ShipmentUpdated::dispatchSafely($shipment);
 
             return back()->with('success', 'Tracking update added.');
         }
@@ -691,7 +691,7 @@ class BladeFrontendController extends Controller
                 'new_values' => $shipment->toArray(),
             ]);
 
-            event(new ShipmentUpdated($shipment));
+            ShipmentUpdated::dispatchSafely($shipment);
 
             return redirect()->route('admin.shipments.edit', $shipment)->with('success', 'Shipment updated successfully.');
         }
