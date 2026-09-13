@@ -21,6 +21,7 @@ use App\Services\NotificationDispatchService;
 use App\Services\PaymentGatewayManager;
 use App\Services\PaymentStageService;
 use App\Services\ShipmentReceiptService;
+use App\Services\ShipmentLocationService;
 use App\Services\TrackingNumberService;
 use App\Support\AdminPermissions;
 use App\Support\AdminSecurity;
@@ -477,6 +478,19 @@ class BladeFrontendController extends Controller
             ]);
             $this->storeRoutePointFromTrackingData($shipment, $data, $user->id);
 
+            if ($event->latitude !== null && $event->longitude !== null) {
+                app(ShipmentLocationService::class)->updateCurrent(
+                    $shipment,
+                    latitude: (float) $event->latitude,
+                    longitude: (float) $event->longitude,
+                    locationName: $event->location,
+                    occurredAt: Carbon::parse($data['occurred_at']),
+                    source: 'admin',
+                    createdBy: $user->id,
+                    status: $shipment->status,
+                );
+            }
+
             $audit->log($request, $user, 'shipment.tracking_event.created', [
                 'target_type' => 'tracking_event',
                 'target_id' => $event->id,
@@ -555,8 +569,13 @@ class BladeFrontendController extends Controller
 
                 'origin_latitude' => ['nullable', 'numeric', 'between:-90,90'],
                 'origin_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+                'origin_location_name' => ['nullable', 'string', 'max:255'],
                 'destination_latitude' => ['nullable', 'numeric', 'between:-90,90'],
                 'destination_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+                'destination_location_name' => ['nullable', 'string', 'max:255'],
+                'current_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+                'current_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+                'current_location_name' => ['nullable', 'string', 'max:255'],
             ]);
 
             $data['status'] = ShipmentStatus::normalizeForDatabase($data['status']);
@@ -645,6 +664,32 @@ class BladeFrontendController extends Controller
                 'status' => $data['status'],
                 'metadata' => $metadata,
             ]);
+
+            $locationService = app(ShipmentLocationService::class);
+            $locationService->syncStatic(
+                $shipment,
+                originCoords: ! empty($data['origin_latitude']) && ! empty($data['origin_longitude'])
+                    ? ['latitude' => $data['origin_latitude'], 'longitude' => $data['origin_longitude']]
+                    : null,
+                originName: $data['origin_location_name'] ?? null,
+                destinationCoords: ! empty($data['destination_latitude']) && ! empty($data['destination_longitude'])
+                    ? ['latitude' => $data['destination_latitude'], 'longitude' => $data['destination_longitude']]
+                    : null,
+                destinationName: $data['destination_location_name'] ?? null,
+                source: 'admin',
+                createdBy: $user->id,
+                status: $shipment->status,
+            );
+            $locationService->updateCurrent(
+                $shipment,
+                latitude: isset($data['current_latitude']) && $data['current_latitude'] !== '' ? (float) $data['current_latitude'] : null,
+                longitude: isset($data['current_longitude']) && $data['current_longitude'] !== '' ? (float) $data['current_longitude'] : null,
+                locationName: $data['current_location_name'] ?? null,
+                occurredAt: now(),
+                source: 'admin',
+                createdBy: $user->id,
+                status: $shipment->status,
+            );
 
             if (! empty($data['origin_latitude']) && ! empty($data['origin_longitude'])) {
                 $shipment->routePoints()->updateOrCreate(
@@ -1118,6 +1163,34 @@ class BladeFrontendController extends Controller
                     'created_by' => $user->id,
                 ],
             ]);
+
+            $locationService = app(ShipmentLocationService::class);
+            $locationService->syncStatic(
+                $shipment,
+                originCoords: isset($originCoords['latitude'], $originCoords['longitude'])
+                    ? ['latitude' => $originCoords['latitude'], 'longitude' => $originCoords['longitude']]
+                    : null,
+                originName: $data['sender_city'],
+                destinationCoords: isset($destinationCoords['latitude'], $destinationCoords['longitude'])
+                    ? ['latitude' => $destinationCoords['latitude'], 'longitude' => $destinationCoords['longitude']]
+                    : null,
+                destinationName: $data['receiver_city'],
+                source: 'admin',
+                createdBy: $user->id,
+                status: 'booked',
+            );
+            if (isset($originCoords['latitude'], $originCoords['longitude'])) {
+                $locationService->updateCurrent(
+                    $shipment,
+                    latitude: (float) $originCoords['latitude'],
+                    longitude: (float) $originCoords['longitude'],
+                    locationName: $data['sender_city'],
+                    occurredAt: now(),
+                    source: 'admin',
+                    createdBy: $user->id,
+                    status: 'booked',
+                );
+            }
 
             $paymentStatus = $data['payment_status'] ?? 'pending';
             $paymentLabels = [
@@ -2155,6 +2228,20 @@ class BladeFrontendController extends Controller
             'points' => $points,
             'has_points' => $points->isNotEmpty(),
         ]);
+    }
+
+    public function trackingLocationData(string $trackingNumber): JsonResponse
+    {
+        $trackingNumber = Str::upper(trim($trackingNumber));
+        $shipment = Shipment::with(['routePoints', 'trackingEvents'])
+            ->where('tracking_number', $trackingNumber)
+            ->first();
+
+        if (! $shipment) {
+            return response()->json(['error' => 'Shipment not found'], 404);
+        }
+
+        return response()->json(app(ShipmentLocationService::class)->locationPayload($shipment));
     }
 
     // ---- STAFF / DRIVER / WAREHOUSE ----

@@ -12,10 +12,12 @@ use App\Services\LocationCoordinateResolver;
 use App\Services\NotificationDispatchService;
 use App\Services\PaymentStageService;
 use App\Services\QuoteService;
+use App\Services\ShipmentLocationService;
 use App\Services\TrackingNumberService;
 use App\Support\ShipmentStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -127,6 +129,34 @@ class ShipmentController extends Controller
                 'created_by' => $request->user()->id,
             ],
         ]);
+
+        $locationService = app(ShipmentLocationService::class);
+        $locationService->syncStatic(
+            $shipment,
+            originCoords: isset($originCoords['latitude'], $originCoords['longitude'])
+                ? ['latitude' => $originCoords['latitude'], 'longitude' => $originCoords['longitude']]
+                : null,
+            originName: $originAddress['city'] ?? null,
+            destinationCoords: isset($destinationCoords['latitude'], $destinationCoords['longitude'])
+                ? ['latitude' => $destinationCoords['latitude'], 'longitude' => $destinationCoords['longitude']]
+                : null,
+            destinationName: $destinationAddress['city'] ?? null,
+            source: 'admin',
+            createdBy: $request->user()->id,
+            status: $shipment->status,
+        );
+        if (isset($originCoords['latitude'], $originCoords['longitude'])) {
+            $locationService->updateCurrent(
+                $shipment,
+                latitude: (float) $originCoords['latitude'],
+                longitude: (float) $originCoords['longitude'],
+                locationName: $originAddress['city'] ?? null,
+                occurredAt: now(),
+                source: 'admin',
+                createdBy: $request->user()->id,
+                status: $shipment->status,
+            );
+        }
 
         $audit->log($request, $request->user(), 'shipment.created', [
             'target_type' => 'shipment',
@@ -245,6 +275,26 @@ class ShipmentController extends Controller
             'metadata' => $nextMetadata,
         ]);
 
+        if (
+            isset($nextOrigin['latitude'], $nextOrigin['longitude'])
+            || isset($nextDestination['latitude'], $nextDestination['longitude'])
+        ) {
+            app(ShipmentLocationService::class)->syncStatic(
+                $shipment,
+                originCoords: isset($nextOrigin['latitude'], $nextOrigin['longitude'])
+                    ? ['latitude' => $nextOrigin['latitude'], 'longitude' => $nextOrigin['longitude']]
+                    : null,
+                originName: $nextOrigin['city'] ?? null,
+                destinationCoords: isset($nextDestination['latitude'], $nextDestination['longitude'])
+                    ? ['latitude' => $nextDestination['latitude'], 'longitude' => $nextDestination['longitude']]
+                    : null,
+                destinationName: $nextDestination['city'] ?? null,
+                source: 'admin',
+                createdBy: $request->user()->id,
+                status: $shipment->status,
+            );
+        }
+
         $shipment->trackingEvents()->create([
             'status' => $shipment->status,
             'location' => $shipment->origin_address['city'] ?? null,
@@ -335,6 +385,35 @@ class ShipmentController extends Controller
             'admin_notes' => $data['admin_notes'] ?? null,
         ]);
         $this->storeRoutePointFromTrackingData($shipment, $data);
+
+        $locationService = app(ShipmentLocationService::class);
+        if (isset($data['latitude'], $data['longitude'])) {
+            $locationService->updateCurrent(
+                $shipment,
+                latitude: (float) $data['latitude'],
+                longitude: (float) $data['longitude'],
+                locationName: $data['location'] ?? null,
+                occurredAt: now(),
+                source: 'admin',
+                createdBy: $request->user()->id,
+                status: $shipment->status,
+            );
+        } elseif (
+            $shipment->status === 'delivered'
+            && $shipment->destination_latitude !== null
+            && $shipment->destination_longitude !== null
+        ) {
+            $locationService->updateCurrent(
+                $shipment,
+                latitude: (float) $shipment->destination_latitude,
+                longitude: (float) $shipment->destination_longitude,
+                locationName: $shipment->destination_location_name,
+                occurredAt: now(),
+                source: 'system',
+                createdBy: $request->user()->id,
+                status: 'delivered',
+            );
+        }
 
         ShipmentUpdated::dispatchSafely($shipment);
 
@@ -496,6 +575,36 @@ class ShipmentController extends Controller
             'admin_notes' => $data['admin_notes'] ?? null,
         ]);
         $this->storeRoutePointFromTrackingData($shipment, $data + ['status' => $eventStatus]);
+
+        $locationService = app(ShipmentLocationService::class);
+        $occurredAt = ! empty($data['occurred_at']) ? Carbon::parse($data['occurred_at']) : now();
+        if (isset($data['latitude'], $data['longitude'])) {
+            $locationService->updateCurrent(
+                $shipment,
+                latitude: (float) $data['latitude'],
+                longitude: (float) $data['longitude'],
+                locationName: $data['location'] ?? null,
+                occurredAt: $occurredAt,
+                source: 'admin',
+                createdBy: $request->user()->id,
+                status: $eventStatus,
+            );
+        } elseif (
+            $eventStatus === 'delivered'
+            && $shipment->destination_latitude !== null
+            && $shipment->destination_longitude !== null
+        ) {
+            $locationService->updateCurrent(
+                $shipment,
+                latitude: (float) $shipment->destination_latitude,
+                longitude: (float) $shipment->destination_longitude,
+                locationName: $shipment->destination_location_name,
+                occurredAt: $occurredAt,
+                source: 'system',
+                createdBy: $request->user()->id,
+                status: 'delivered',
+            );
+        }
 
         ShipmentUpdated::dispatchSafely($shipment);
 

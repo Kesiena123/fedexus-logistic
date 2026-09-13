@@ -25,16 +25,14 @@
 @php
 use App\Support\ShipmentStatus;
 use App\Support\AppSettings;
-use App\Services\LocationCoordinateResolver;
 use Illuminate\Support\Str;
 
-$coordinateResolver = app(LocationCoordinateResolver::class);
 $displayStatus = $shipment ? ShipmentStatus::toCode($shipment->status) : null;
 $statusLabel = $shipment ? ShipmentStatus::toDisplay($shipment->status) : null;
 $statusColor = $shipment ? ShipmentStatus::color($displayStatus) : null;
 $allEvents = $shipment ? $shipment->trackingEvents->sortByDesc('occurred_at') : collect();
 $events = $allEvents->values();
-$mapPoints = collect();
+$mapPoints = $mapPoints ?? collect();
 
 if ($shipment) {
     $senderMeta = $shipment->metadata['sender'] ?? [];
@@ -73,55 +71,6 @@ if ($shipment) {
             'longitude' => $latestEvent->longitude ?? null,
         ];
         $uniqueLocationEvents = collect([$currentEntry])->merge($uniqueLocationEvents)->values();
-    }
-
-    $routeMapPoints = ($shipment->routePoints ?? collect())
-        ->map(function ($point) use ($coordinateResolver) {
-            $coords = ($point->latitude !== null && $point->longitude !== null)
-                ? ['latitude' => (float)$point->latitude, 'longitude' => (float)$point->longitude]
-                : $coordinateResolver->resolveLocation((string)$point->location, $point->country_code);
-            if (!$coords) return null;
-            return ['label'=>$point->label,'location'=>$point->location,'latitude'=>$coords['latitude'],'longitude'=>$coords['longitude'],'type'=>$point->type];
-        })->filter();
-
-    $latestEventId = optional(($shipment->trackingEvents ?? collect())->first())->id;
-    $eventMapPoints = ($shipment->trackingEvents ?? collect())->reverse()
-        ->map(function ($event) use ($coordinateResolver, $latestEventId) {
-            $coords = ($event->latitude !== null && $event->longitude !== null)
-                ? ['latitude' => (float)$event->latitude, 'longitude' => (float)$event->longitude]
-                : $coordinateResolver->resolveLocation((string)$event->location, $event->country_code);
-            if (!$coords) return null;
-            return ['label'=>$event->id===$latestEventId?'Current Location':ShipmentStatus::toDisplay($event->status),'location'=>$event->location,'latitude'=>$coords['latitude'],'longitude'=>$coords['longitude'],'type'=>$event->id===$latestEventId?'current':'transit'];
-        })->filter();
-
-    $mapPoints = collect($routeMapPoints)->merge($eventMapPoints)
-        ->unique(fn($p)=>$p['latitude'].'|'.$p['longitude'].'|'.$p['label'])->values();
-
-    if ($mapPoints->isEmpty()) {
-        if ($shipment->origin_address) {
-            $coords = $coordinateResolver->resolveAddress($shipment->origin_address);
-            if ($coords) {
-                $mapPoints->push([
-                    'label' => 'Origin',
-                    'location' => $shipment->origin_address['city'] ?? ($shipment->origin_address['address'] ?? ''),
-                    'latitude' => $coords['latitude'],
-                    'longitude' => $coords['longitude'],
-                    'type' => 'origin',
-                ]);
-            }
-        }
-        if ($shipment->destination_address) {
-            $coords = $coordinateResolver->resolveAddress($shipment->destination_address);
-            if ($coords) {
-                $mapPoints->push([
-                    'label' => 'Destination',
-                    'location' => $shipment->destination_address['city'] ?? ($shipment->destination_address['address'] ?? ''),
-                    'latitude' => $coords['latitude'],
-                    'longitude' => $coords['longitude'],
-                    'type' => 'destination',
-                ]);
-            }
-        }
     }
 }
 @endphp
@@ -352,6 +301,9 @@ if ($shipment) {
                             @else
                                 Tracking information will update when location data is available.
                             @endif
+                        </p>
+                        <p class="shipment-map-subtitle" id="live-stale-note" style="display:none;color:#b45309;font-weight:600;">
+                            Last location update: <span id="live-stale-time">N/A</span> — Location may be outdated.
                         </p>
                     </div>
                 </div>
@@ -1081,18 +1033,37 @@ if ($shipment) {
     }
 
     function pollTrackingData() {
-        fetch('/tracking/' + encodeURIComponent(trackingNumber) + '/live')
+        fetch('/tracking/' + encodeURIComponent(trackingNumber) + '/location')
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.error) return;
                 var statusEl = document.getElementById('live-status-text');
-                if (statusEl) statusEl.textContent = data.status + ' \u00B7 Last updated: ' + data.last_updated;
+                if (statusEl && data.status) {
+                    var lastLabel = (data.current && data.current.updated_human) ? data.current.updated_human : (data.last_updated || 'N/A');
+                    statusEl.textContent = data.status + ' \u00B7 Last updated: ' + lastLabel;
+                }
                 var refreshEl = document.getElementById('live-refresh-text');
-                if (refreshEl) refreshEl.textContent = 'Updated ' + data.last_updated;
-                if (!map && data.has_points && data.points) {
-                    initMap(data.points);
-                } else if (map && data.has_points && data.points) {
-                    updateMapData(data.points);
+                if (refreshEl && data.current && data.current.updated_human) {
+                    refreshEl.textContent = 'Updated ' + data.current.updated_human;
+                }
+                var staleNote = document.getElementById('live-stale-note');
+                if (staleNote) {
+                    if (data.current && data.current.stale) {
+                        var staleTime = document.getElementById('live-stale-time');
+                        if (staleTime && data.current.updated_human) staleTime.textContent = data.current.updated_human;
+                        staleNote.style.display = 'block';
+                    } else {
+                        staleNote.style.display = 'none';
+                    }
+                }
+                if (data.has_points && data.points && data.points.length) {
+                    if (!map) {
+                        initMap(data.points);
+                    } else {
+                        updateMapData(data.points);
+                    }
+                } else if (!map) {
+                    showUnavailable(true);
                 }
             })
             .catch(function() {});
@@ -1104,6 +1075,7 @@ if ($shipment) {
         } else {
             showUnavailable(true);
         }
+        pollTrackingData();
         setInterval(pollTrackingData, 15000);
 
         var resizeTimer;

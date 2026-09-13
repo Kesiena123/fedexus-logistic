@@ -32,6 +32,7 @@ Route::get('/track', [BladeFrontendController::class, 'tracking'])->name('track'
 Route::match(['get', 'post'], '/tracking', [BladeFrontendController::class, 'tracking'])->name('tracking');
 Route::get('/tracking/{trackingNumber}', [BladeFrontendController::class, 'trackingWithNumber'])->name('tracking.number');
 Route::get('/tracking/{trackingNumber}/live', [BladeFrontendController::class, 'trackingLiveData'])->name('tracking.live');
+Route::get('/tracking/{trackingNumber}/location', [BladeFrontendController::class, 'trackingLocationData'])->name('tracking.location')->middleware('throttle:60,1');
 Route::get('/track/{trackingNumber}', [BladeFrontendController::class, 'trackRedirect'])->name('track.redirect');
 Route::get('/receipt/{trackingNumber}', [BladeFrontendController::class, 'receipt'])->name('receipt');
 Route::get('/receipt/{trackingNumber}/pdf', [BladeFrontendController::class, 'receiptPdf'])->name('receipt.pdf');

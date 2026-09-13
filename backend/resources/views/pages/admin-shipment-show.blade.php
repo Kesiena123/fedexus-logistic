@@ -142,7 +142,7 @@
             </section>
         </div>
 
-        @if($mapPoints->count())
+        @if($shipment)
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <div class="tracking-fade-in-delay2 shipment-map-wrapper">
             <div class="shipment-map-container">
@@ -155,6 +155,9 @@
                             <h3 class="shipment-map-title">Live Tracking Map</h3>
                             <p class="shipment-map-subtitle" id="live-status-text">
                                 {{ str_replace('_', ' ', ucfirst($shipment->status)) }} &middot; Last updated: {{ ($shipment->trackingEvents->first())?->occurred_at?->diffForHumans() ?? 'N/A' }}
+                            </p>
+                            <p class="shipment-map-subtitle" id="live-stale-note" style="display:none;color:#b45309;font-weight:600;">
+                                Last location update: <span id="live-stale-time">N/A</span> — Location may be outdated.
                             </p>
                         </div>
                     </div>
@@ -349,18 +352,37 @@
             }
 
             function pollTrackingData() {
-                fetch('/tracking/' + encodeURIComponent(trackingNumber) + '/live')
+                fetch('/tracking/' + encodeURIComponent(trackingNumber) + '/location')
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.error) return;
                         var statusEl = document.getElementById('live-status-text');
-                        if (statusEl) statusEl.textContent = data.status + ' \u00B7 Last updated: ' + data.last_updated;
+                        if (statusEl && data.status) {
+                            var lastLabel = (data.current && data.current.updated_human) ? data.current.updated_human : (data.last_updated || 'N/A');
+                            statusEl.textContent = data.status + ' \u00B7 Last updated: ' + lastLabel;
+                        }
                         var refreshEl = document.getElementById('live-refresh-text');
-                        if (refreshEl) refreshEl.textContent = 'Updated ' + data.last_updated;
-                        if (!map && data.has_points && data.points) {
-                            initMap(data.points);
-                        } else if (map && data.has_points && data.points) {
-                            updateMapData(data.points);
+                        if (refreshEl && data.current && data.current.updated_human) {
+                            refreshEl.textContent = 'Updated ' + data.current.updated_human;
+                        }
+                        var staleNote = document.getElementById('live-stale-note');
+                        if (staleNote) {
+                            if (data.current && data.current.stale) {
+                                var staleTime = document.getElementById('live-stale-time');
+                                if (staleTime && data.current.updated_human) staleTime.textContent = data.current.updated_human;
+                                staleNote.style.display = 'block';
+                            } else {
+                                staleNote.style.display = 'none';
+                            }
+                        }
+                        if (data.has_points && data.points && data.points.length) {
+                            if (!map) {
+                                initMap(data.points);
+                            } else {
+                                updateMapData(data.points);
+                            }
+                        } else if (!map) {
+                            showUnavailable(true);
                         }
                     })
                     .catch(function() {});
@@ -372,6 +394,7 @@
                 } else {
                     showUnavailable(true);
                 }
+                pollTrackingData();
                 setInterval(pollTrackingData, 15000);
 
                 var resizeTimer;

@@ -12,6 +12,10 @@ class Shipment extends Model
         'user_id', 'driver_id', 'warehouse_id', 'tracking_number', 'status', 'service_level',
         'sender_name', 'recipient_name', 'origin_address', 'destination_address', 'weight_kg',
         'declared_value', 'quoted_amount', 'estimated_delivery_at', 'delivered_at', 'metadata',
+        'current_latitude', 'current_longitude', 'current_location_name',
+        'origin_latitude', 'origin_longitude', 'origin_location_name',
+        'destination_latitude', 'destination_longitude', 'destination_location_name',
+        'location_updated_at',
     ];
 
     protected $casts = [
@@ -23,6 +27,13 @@ class Shipment extends Model
         'weight_kg' => 'decimal:2',
         'declared_value' => 'decimal:2',
         'quoted_amount' => 'decimal:2',
+        'current_latitude' => 'float',
+        'current_longitude' => 'float',
+        'origin_latitude' => 'float',
+        'origin_longitude' => 'float',
+        'destination_latitude' => 'float',
+        'destination_longitude' => 'float',
+        'location_updated_at' => 'datetime',
     ];
 
     public function trackingEvents(): HasMany
@@ -58,6 +69,11 @@ class Shipment extends Model
     public function routePoints(): HasMany
     {
         return $this->hasMany(ShipmentRoutePoint::class)->orderBy('sort_order');
+    }
+
+    public function locationHistory(): HasMany
+    {
+        return $this->hasMany(ShipmentLocationHistory::class)->orderBy('occurred_at');
     }
 
     public function paymentRequests(): HasMany

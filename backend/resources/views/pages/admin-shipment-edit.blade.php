@@ -218,7 +218,7 @@
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-bold text-slate-900">Location & Route</h3>
-            <p class="mt-1 text-sm text-slate-500">Set origin and destination coordinates for the map.</p>
+            <p class="mt-1 text-sm text-slate-500">Set origin, destination and current coordinates for the map.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <div class="rounded-md bg-slate-50 p-4">
                     <h4 class="font-semibold text-slate-800">Origin Location</h4>
@@ -231,6 +231,10 @@
                             <label class="block text-xs font-semibold text-slate-600">Longitude</label>
                             <input type="number" name="origin_longitude" value="{{ old('origin_longitude', $originAddr['longitude'] ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                         </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs font-semibold text-slate-600">Location Name</label>
+                        <input type="text" name="origin_location_name" value="{{ old('origin_location_name', $shipment->origin_location_name ?? '') }}" maxlength="255" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                     </div>
                 </div>
                 <div class="rounded-md bg-slate-50 p-4">
@@ -245,6 +249,28 @@
                             <input type="number" name="destination_longitude" value="{{ old('destination_longitude', $destAddr['longitude'] ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                         </div>
                     </div>
+                    <div class="mt-3">
+                        <label class="block text-xs font-semibold text-slate-600">Location Name</label>
+                        <input type="text" name="destination_location_name" value="{{ old('destination_location_name', $shipment->destination_location_name ?? '') }}" maxlength="255" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 rounded-md bg-slate-50 p-4">
+                <h4 class="font-semibold text-slate-800">Current Location</h4>
+                <p class="mt-0.5 text-xs text-slate-500">Last known live position. Leave blank to keep the latest tracking event location.</p>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600">Latitude</label>
+                        <input type="number" name="current_latitude" value="{{ old('current_latitude', $shipment->current_latitude ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600">Longitude</label>
+                        <input type="number" name="current_longitude" value="{{ old('current_longitude', $shipment->current_longitude ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="block text-xs font-semibold text-slate-600">Location Name</label>
+                    <input type="text" name="current_location_name" value="{{ old('current_location_name', $shipment->current_location_name ?? '') }}" maxlength="255" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                 </div>
             </div>
 
