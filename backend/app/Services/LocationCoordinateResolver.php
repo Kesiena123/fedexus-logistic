@@ -93,6 +93,14 @@ class LocationCoordinateResolver
             'JP' => [36.2048, 138.2529],
             'BR' => [-14.2350, -51.9253],
             'ZA' => [-30.5595, 22.9375],
+            'AU' => [-25.2744, 133.7751],
+            'MX' => [23.6345, -102.5528],
+            'KR' => [35.9078, 127.7669],
+            'SG' => [1.3521, 103.8198],
+            'NL' => [52.1326, 5.2913],
+            'KE' => [-1.2921, 36.8219],
+            'GH' => [7.9465, -1.0232],
+            'EG' => [26.8206, 30.8025],
         ];
 
         if (isset($countryCentroids[$countryCode])) {
@@ -160,6 +168,11 @@ class LocationCoordinateResolver
     private function countryCode(string $country): string
     {
         $normalized = strtoupper(trim($country));
+
+        if (preg_match('/\(([A-Z]{2,3})\)/', $normalized, $m)) {
+            return $m[1];
+        }
+
         $aliases = [
             'UNITED STATES' => 'US',
             'USA' => 'US',
