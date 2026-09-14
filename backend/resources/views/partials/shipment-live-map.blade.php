@@ -41,28 +41,48 @@
 
         {{-- Map + overlays --}}
         <div class="shipment-map-body">
-            <div id="shipment-route-map"></div>
+            {{-- Map canvas (map stretches, overlays stay relative to it) --}}
+            <div class="spm-map-canvas">
+                <div id="shipment-route-map"></div>
 
-            {{-- Map controls --}}
-            <div class="spm-controls" id="spm-controls">
-                <button type="button" class="spm-control-btn" id="spm-zoom-in" title="Zoom in" aria-label="Zoom in">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </button>
-                <button type="button" class="spm-control-btn" id="spm-zoom-out" title="Zoom out" aria-label="Zoom out">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </button>
-                <button type="button" class="spm-control-btn" id="spm-center" title="Center on shipment" aria-label="Center on shipment">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-                </button>
-                <button type="button" class="spm-control-btn" id="spm-fit" title="Fit route" aria-label="Fit route">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg>
-                </button>
-                <button type="button" class="spm-control-btn" id="spm-fullscreen" title="Full screen" aria-label="Toggle full screen">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                </button>
+                {{-- Map controls --}}
+                <div class="spm-controls" id="spm-controls">
+                    <button type="button" class="spm-control-btn" id="spm-zoom-in" title="Zoom in" aria-label="Zoom in">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button type="button" class="spm-control-btn" id="spm-zoom-out" title="Zoom out" aria-label="Zoom out">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button type="button" class="spm-control-btn" id="spm-center" title="Center on shipment" aria-label="Center on shipment">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                    </button>
+                    <button type="button" class="spm-control-btn" id="spm-fit" title="Fit route" aria-label="Fit route">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg>
+                    </button>
+                    <button type="button" class="spm-control-btn" id="spm-fullscreen" title="Full screen" aria-label="Toggle full screen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                    </button>
+                </div>
+
+                {{-- Legend --}}
+                <div class="spm-legend" id="spm-legend">
+                    <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#2563eb"></span>Origin</span>
+                    <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#dc2626"></span>Current Location</span>
+                    <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#059669"></span>Destination</span>
+                    <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#7c3aed"></span>Checkpoint</span>
+                </div>
+
+                {{-- Unavailable note (does not block the map) --}}
+                <div id="map-unavailable" class="shipment-map-unavailable" style="display: none">
+                    <span class="shipment-map-unavailable-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
+                    <span class="shipment-map-unavailable-text">
+                        <span class="shipment-map-unavailable-title">Shipment location is currently unavailable</span>
+                        <span class="shipment-map-unavailable-desc">The map will update automatically when a new location is reported.</span>
+                    </span>
+                </div>
             </div>
 
-            {{-- Information panel --}}
+            {{-- Information panel (sits beside the map, never covers it) --}}
             <div class="spm-info-panel" id="spm-info-panel">
                 <div class="spm-info-head">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -78,23 +98,6 @@
                         <div class="spm-info-row"><span class="spm-info-label">Estimated Delivery</span><span class="spm-info-value" id="spm-info-eta">{{ $mapEta }}</span></div>
                     @endif
                 </div>
-            </div>
-
-            {{-- Legend --}}
-            <div class="spm-legend" id="spm-legend">
-                <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#2563eb"></span>Origin</span>
-                <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#dc2626"></span>Current Location</span>
-                <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#059669"></span>Destination</span>
-                <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#7c3aed"></span>Checkpoint</span>
-            </div>
-
-            {{-- Unavailable note (does not block the map) --}}
-            <div id="map-unavailable" class="shipment-map-unavailable" style="display: none">
-                <span class="shipment-map-unavailable-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
-                <span class="shipment-map-unavailable-text">
-                    <span class="shipment-map-unavailable-title">Shipment location is currently unavailable</span>
-                    <span class="shipment-map-unavailable-desc">The map will update automatically when a new location is reported.</span>
-                </span>
             </div>
         </div>
     </div>

@@ -312,6 +312,19 @@ a {
 
 .shipment-map-body {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+    .shipment-map-body {
+        grid-template-columns: minmax(0, 1fr) 19rem;
+    }
+}
+
+.spm-map-canvas {
+    position: relative;
+    min-width: 0;
 }
 
 #shipment-route-map {
@@ -704,18 +717,31 @@ a {
     height: 16px;
 }
 
-/* --- information panel --- */
+/* --- information panel (side panel, does not overlay the map) --- */
 .spm-info-panel {
-    position: absolute;
-    left: 0.75rem;
-    top: 0.75rem;
+    position: static;
     z-index: 1000;
-    width: min(16.5rem, calc(100% - 4.5rem));
+    width: 100%;
     border-radius: 0.75rem;
-    background: rgba(255,255,255,0.96);
+    background: #fff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+    .spm-info-panel {
+        border-left: 0;
+        border-radius: 0;
+    }
+}
+
+@media (max-width: 1023.98px) {
+    .spm-info-panel {
+        margin-top: 0.4rem;
+    }
 }
 
 .spm-info-head {
@@ -839,6 +865,14 @@ a {
     height: 100vh;
 }
 
+.shipment-map-container.spm-fullscreen .spm-info-panel {
+    display: none;
+}
+
+.shipment-map-container.spm-fullscreen .shipment-map-body {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .shipment-map-container.spm-fullscreen #shipment-route-map {
     height: 100vh;
     min-height: 100vh;
@@ -849,7 +883,6 @@ a {
     .spm-controls { right: 0.5rem; top: 0.5rem; gap: 0.3rem; }
     .spm-control-btn { width: 2rem; height: 2rem; border-radius: 0.5rem; }
     .spm-control-btn svg { width: 14px; height: 14px; }
-    .spm-info-panel { left: 0.5rem; top: 0.5rem; width: min(15rem, calc(100% - 3.75rem)); }
     .spm-legend { left: 0.5rem; bottom: 0.5rem; }
     .spm-info-row, .spm-info-head { font-size: 0.68rem; }
 }
