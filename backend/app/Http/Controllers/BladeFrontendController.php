@@ -38,6 +38,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Response;
+
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Picqer\Barcode\Barcode;
 use Picqer\Barcode\BarcodeGenerator;
@@ -576,10 +578,34 @@ class BladeFrontendController extends Controller
                 'current_latitude' => ['nullable', 'numeric', 'between:-90,90'],
                 'current_longitude' => ['nullable', 'numeric', 'between:-180,180'],
                 'current_location_name' => ['nullable', 'string', 'max:255'],
+
+                'photos' => ['nullable', 'array', 'max:10'],
+                'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'delete_photos' => ['nullable', 'array'],
+                'delete_photos.*' => ['integer'],
+                'primary_photo' => ['nullable', 'integer'],
             ]);
 
             $data['status'] = ShipmentStatus::normalizeForDatabase($data['status']);
             abort_unless(in_array($data['status'], ShipmentStatus::databaseStatuses(), true), 422, 'Unsupported shipment status.');
+
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+            $maxBytes = 5 * 1024 * 1024;
+
+            // Validate replacement photo files up-front so a bad file never mutates shipment data.
+            $replaceErrors = [];
+            foreach ($shipment->attachments()->where('category', 'package_image')->pluck('id') as $attachmentId) {
+                $field = 'replace_photo_'.$attachmentId;
+                if ($request->hasFile($field)) {
+                    $newFile = $request->file($field);
+                    if (! $newFile->isValid() || ! in_array($newFile->getMimeType(), $allowedMimes, true) || $newFile->getSize() > $maxBytes) {
+                        $replaceErrors[$field] = 'Photo must be JPG, PNG, or WebP under 5MB.';
+                    }
+                }
+            }
+            if (! empty($replaceErrors)) {
+                return back()->withErrors($replaceErrors)->withInput();
+            }
 
             $existingOrigin = $shipment->origin_address;
             $existingDest = $shipment->destination_address;
@@ -729,6 +755,88 @@ class BladeFrontendController extends Controller
                 'occurred_at' => now(),
             ]);
 
+            // Photo management: add, replace, delete, set primary. Scoped to this shipment only.
+            $packageImages = $shipment->attachments()->where('category', 'package_image')->get();
+            $deleteRequested = collect($request->input('delete_photos', []))->map(fn ($v) => (int) $v)->values();
+            $primaryRequested = $request->input('primary_photo') !== '' ? $request->input('primary_photo') : null;
+            $photoAction = $request->hasFile('photos') || $deleteRequested->isNotEmpty() || $primaryRequested !== null;
+
+            foreach ($packageImages as $attachment) {
+                $field = 'replace_photo_'.$attachment->id;
+                if ($request->hasFile($field)) {
+                    $newFile = $request->file($field);
+                    $newPath = $newFile->store('shipment-attachments/'.$shipment->id, 'public');
+                    Storage::disk($attachment->disk)->delete($attachment->path);
+                    $attachment->update([
+                        'original_name' => $newFile->getClientOriginalName(),
+                        'stored_name' => $newFile->hashName(),
+                        'path' => $newPath,
+                        'mime_type' => $newFile->getMimeType(),
+                        'size_bytes' => $newFile->getSize(),
+                    ]);
+                    $photoAction = true;
+                }
+            }
+
+            foreach ($deleteRequested as $deleteId) {
+                $attachment = $packageImages->first(fn ($a) => (int) $a->id === $deleteId);
+                if (! $attachment) {
+                    continue;
+                }
+                Storage::disk($attachment->disk)->delete($attachment->path);
+                $attachment->delete();
+                $photoAction = true;
+            }
+
+            if ((int) $primaryRequested > 0) {
+                $primaryTarget = $packageImages->first(fn ($a) => (int) $a->id === (int) $primaryRequested);
+                if ($primaryTarget) {
+                    foreach ($shipment->attachments()->where('category', 'package_image')->get() as $attachment) {
+                        $meta = $attachment->metadata ?? [];
+                        $meta['is_primary'] = (int) $attachment->id === (int) $primaryTarget->id;
+                        $attachment->update(['metadata' => $meta]);
+                    }
+                    $photoAction = true;
+                }
+            }
+
+            if ($request->hasFile('photos')) {
+                $existingImages = $shipment->attachments()->where('category', 'package_image')->get();
+                $anyPrimary = $existingImages->contains(fn ($a) => (bool) data_get($a->metadata, 'is_primary', false));
+                foreach ($request->file('photos') as $photo) {
+                    if ($photo->isValid()) {
+                        $path = $photo->store('shipment-attachments/'.$shipment->id, 'public');
+                        $meta = ['visible_to_customer' => true];
+                        if (! $anyPrimary) {
+                            $meta['is_primary'] = true;
+                            $anyPrimary = true;
+                        }
+                        $shipment->attachments()->create([
+                            'uploaded_by' => $user->id,
+                            'category' => 'package_image',
+                            'original_name' => $photo->getClientOriginalName(),
+                            'stored_name' => $photo->hashName(),
+                            'disk' => 'public',
+                            'path' => $path,
+                            'mime_type' => $photo->getMimeType(),
+                            'size_bytes' => $photo->getSize(),
+                            'metadata' => $meta,
+                        ]);
+                        $photoAction = true;
+                    }
+                }
+            }
+
+            if ($photoAction && $primaryRequested === null) {
+                $remaining = $shipment->attachments()->where('category', 'package_image')->orderBy('id')->get();
+                if ($remaining->isNotEmpty() && $remaining->every(fn ($a) => ! data_get($a->metadata, 'is_primary', false))) {
+                    $fallback = $remaining->first();
+                    $meta = $fallback->metadata ?? [];
+                    $meta['is_primary'] = true;
+                    $fallback->update(['metadata' => $meta]);
+                }
+            }
+
             $audit->log($request, $user, 'shipment.updated', [
                 'target_type' => 'shipment',
                 'target_id' => $shipment->id,
@@ -751,11 +859,12 @@ class BladeFrontendController extends Controller
         $firstPackage = $packages[0] ?? [];
         $originAddr = $shipment->origin_address ?? [];
         $destAddr = $shipment->destination_address ?? [];
+        $shipmentPhotos = $shipment->attachments->filter(fn ($a) => $a->category === 'package_image')->values();
 
         return view('pages.admin-shipment-edit', compact(
             'user', 'shipment', 'statuses', 'metadata',
             'senderMeta', 'receiverMeta', 'costMeta', 'firstPackage',
-            'originAddr', 'destAddr'
+            'originAddr', 'destAddr', 'shipmentPhotos'
         ));
     }
 

@@ -306,21 +306,49 @@
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-bold text-slate-900">Shipment Photos</h3>
-            <p class="mt-1 text-sm text-slate-500">Upload images via the attachments section on the shipment details page.</p>
-            @if($shipment->attachments->count())
-                <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($shipment->attachments as $attachment)
-                        <div class="relative rounded-md border border-slate-200 p-2">
-                            @if(in_array($attachment->mime_type, ['image/jpeg', 'image/png', 'image/webp', 'image/gif']))
-                                <img src="{{ \Illuminate\Support\Facades\Storage::disk($attachment->disk)->url($attachment->path) }}" alt="{{ $attachment->original_name }}" class="h-32 w-full rounded object-cover">
-                            @endif
-                            <p class="mt-1 truncate text-xs text-slate-500">{{ $attachment->original_name }}</p>
+            <p class="mt-1 text-sm text-slate-500">Manage this shipment's package photos. Add, replace, or delete photos and choose the primary photo.</p>
+
+            @if($shipmentPhotos->count())
+                <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($shipmentPhotos as $attachment)
+                        <div class="rounded-md border {{ $attachment->isPrimary() ? 'border-azure-400 ring-2 ring-azure-100' : 'border-slate-200' }} bg-white p-2">
+                            <div class="relative">
+                                @if(\Illuminate\Support\Facades\Storage::disk($attachment->disk)->exists($attachment->path))
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk($attachment->disk)->url($attachment->path) }}" alt="{{ $attachment->original_name }}" class="h-32 w-full rounded object-cover">
+                                @else
+                                    <div class="flex h-32 w-full items-center justify-center rounded bg-slate-100 text-xs text-slate-400">File missing</div>
+                                @endif
+                                @if($attachment->isPrimary())
+                                    <span class="absolute left-2 top-2 rounded bg-azure-600 px-2 py-0.5 text-[10px] font-bold text-white">Primary</span>
+                                @endif
+                            </div>
+                            <p class="mt-1 truncate text-xs text-slate-500" title="{{ $attachment->original_name }}">{{ $attachment->original_name }}</p>
+                            <div class="mt-2 space-y-2 text-xs">
+                                <label class="flex items-center gap-1.5 text-slate-600">
+                                    <input type="radio" name="primary_photo" value="{{ $attachment->id }}" @checked($attachment->isPrimary())>
+                                    <span>Set as primary photo</span>
+                                </label>
+                                <label class="block text-slate-600">
+                                    <span>Replace photo</span>
+                                    <input type="file" name="replace_photo_{{ $attachment->id }}" accept="image/jpeg,image/png,image/webp" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-1.5 text-xs file:mr-2 file:rounded-md file:border-0 file:bg-azure-50 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-azure-700">
+                                </label>
+                                <label class="flex items-center gap-1.5 text-red-600">
+                                    <input type="checkbox" name="delete_photos[]" value="{{ $attachment->id }}" class="delete-photo-check">
+                                    <span>Delete this photo</span>
+                                </label>
+                            </div>
                         </div>
                     @endforeach
                 </div>
             @else
-                <p class="mt-3 text-sm text-slate-500">No photos uploaded yet. Go to the shipment details page to manage attachments.</p>
+                <p class="mt-3 text-sm text-slate-500">No photos uploaded yet. Select photos below and save to add them.</p>
             @endif
+
+            <div class="mt-5 border-t border-slate-100 pt-4">
+                <label class="block text-sm font-semibold text-slate-700">Add New Photos</label>
+                <p class="mt-1 text-sm text-slate-500">Select one or more images below (JPG, PNG, WebP, max 5MB each). Existing photos are kept and the new photos are added to this shipment.</p>
+                <input type="file" name="photos[]" multiple accept="image/jpeg,image/png,image/webp" class="mt-2 block w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-azure-500 focus:outline-none file:mr-3 file:rounded-md file:border-0 file:bg-azure-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-azure-700 hover:file:bg-azure-100">
+            </div>
         </div>
 
         <div class="flex gap-4">
@@ -328,6 +356,33 @@
             <a href="{{ route('admin.shipments.show', $shipment) }}" class="rounded-md border border-slate-300 px-8 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>
         </div>
     </form>
+
+    <script>
+    (function() {
+        function photoReady(fn) {
+            if (document.readyState !== 'loading') { fn(); } else { document.addEventListener('DOMContentLoaded', fn); }
+        }
+        photoReady(function() {
+            var form = document.querySelector('form[enctype="multipart/form-data"]');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                var checked = form.querySelectorAll('.delete-photo-check:checked');
+                if (checked.length) {
+                    var labels = [];
+                    checked.forEach(function(cb) {
+                        var card = cb.closest('.rounded-md');
+                        var img = card ? card.querySelector('img') : null;
+                        var name = card ? card.querySelector('p[title]') : null;
+                        labels.push(img ? (img.alt || 'photo') : (name ? name.textContent : 'photo'));
+                    });
+                    if (!window.confirm('Delete the selected photo(s)? This cannot be undone.\n\n' + labels.join(', ') + '\n\nThe shipment and its other photos will remain unchanged.')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    })();
+    </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>

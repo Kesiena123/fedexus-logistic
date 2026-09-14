@@ -42,6 +42,11 @@ class ShipmentAttachment extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    public function isPrimary(): bool
+    {
+        return $this->category === 'package_image' && (bool) data_get($this->metadata, 'is_primary', false);
+    }
+
     public function isVisibleOnTracking(): bool
     {
         if (in_array($this->category, ['tracking_qr', 'tracking_barcode'], true)) {

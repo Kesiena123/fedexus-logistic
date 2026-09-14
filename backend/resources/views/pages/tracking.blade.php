@@ -45,6 +45,7 @@ if ($shipment) {
     $photoAttachments = ($shipment->attachments ?? collect())
         ->filter(fn($a) => $a->isVisibleOnTracking())
         ->filter(fn($a) => Storage::disk($a->disk)->exists($a->path))
+        ->sortByDesc(fn($a) => $a->isPrimary())
         ->values();
 
     $uniqueLocationEvents = $events->values()
@@ -390,6 +391,9 @@ if ($shipment) {
                             <div class="group relative cursor-pointer overflow-hidden rounded-xl border border-navy-100 bg-slate-50 transition-shadow hover:shadow-md"
                                  @click="lightboxSrc='{{ $photoUrl }}'; lightboxAlt='{{ addslashes($photo->original_name ?? 'Shipment photo') }}'; lightboxOpen=true">
                                 <img src="{{ $photoUrl }}" alt="{{ $photo->original_name ?? 'Shipment photo' }}" class="aspect-square w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+                                @if($photo->isPrimary())
+                                    <span class="absolute left-2 top-2 rounded bg-azure-600 px-2 py-0.5 text-[10px] font-bold text-white">Primary</span>
+                                @endif
                                 <div class="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10"></div>
                                 <div class="absolute inset-x-0 bottom-0 flex items-center justify-center bg-gradient-to-t from-black/50 to-transparent pb-3 pt-8 opacity-0 transition-opacity group-hover:opacity-100">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
