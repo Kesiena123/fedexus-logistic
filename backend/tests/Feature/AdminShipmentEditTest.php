@@ -124,6 +124,52 @@ class AdminShipmentEditTest extends TestCase
         $response->assertSee('Cancel');
     }
 
+    public function test_edit_page_renders_route_preview_map(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get(route('admin.shipments.edit', $this->shipment));
+
+        $response->assertOk();
+        $response->assertSee('Route Preview');
+        $response->assertSee('shipment-preview-map');
+        $response->assertSee('id="origin_lat"', false);
+        $response->assertSee('id="origin_lng"', false);
+        $response->assertSee('id="dest_lat"', false);
+        $response->assertSee('id="dest_lng"', false);
+        $response->assertSee('id="current_lat"', false);
+        $response->assertSee('id="current_lng"', false);
+    }
+
+    public function test_show_page_renders_live_map_partial(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get(route('admin.shipments.show', $this->shipment));
+
+        $response->assertOk();
+        $response->assertSee('shipment-map-container');
+        $response->assertSee('spm-info-panel');
+        $response->assertSee('spm-controls');
+        $response->assertSee('spm-legend');
+        $response->assertSee('spm-live-message');
+        $response->assertSee('spm-info-tracking');
+        $response->assertSee('pollTrackingData');
+        $response->assertSee('setInterval(pollTrackingData, 10000)');
+    }
+
+    public function test_tracking_page_renders_updated_live_map(): void
+    {
+        $response = $this->get('/tracking/' . $this->shipment->tracking_number);
+
+        $response->assertOk();
+        $response->assertSee('spm-info-panel');
+        $response->assertSee('spm-controls');
+        $response->assertSee('spm-legend');
+        $response->assertSee('spm-live-message');
+        $response->assertSee('spm-info-tracking');
+        $response->assertSee('pollTrackingData');
+        $response->assertSee('setInterval(pollTrackingData, 10000)');
+    }
+
     public function test_post_updates_shipment_basic_fields(): void
     {
         $response = $this->actingAs($this->admin)

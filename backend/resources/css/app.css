@@ -543,6 +543,302 @@ a {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* ========================================
+   PROFESSIONAL LIVE MAP (info panel, controls, legend, pins)
+   ======================================== */
+
+/* --- richer popup rows --- */
+.spm-popup-row {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.74rem;
+    color: #334155;
+    margin-top: 0.28rem;
+    line-height: 1.4;
+}
+
+.spm-popup-row .spm-popup-k {
+    color: #94a3b8;
+    font-weight: 600;
+    min-width: 4.6rem;
+    flex-shrink: 0;
+}
+
+/* --- current marker (pulsing dot + halo) --- */
+.spm-marker-current {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spm-marker-halo {
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.18);
+    z-index: 1;
+}
+
+.spm-marker-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: #dc2626;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5);
+    z-index: 2;
+    position: relative;
+}
+
+/* --- transit checkpoints --- */
+.spm-marker-transit-wrapper {
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.spm-marker-transit {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #7c3aed;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* --- origin / destination pins --- */
+.spm-pin-wrapper {
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.spm-pin {
+    position: relative;
+    width: 32px;
+    height: 38px;
+    transition: transform 0.15s ease;
+}
+
+.spm-pin:hover {
+    transform: scale(1.12);
+}
+
+.spm-pin-bg {
+    position: absolute;
+    left: 3px;
+    top: 5px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2.5px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.spm-pin-letter {
+    position: absolute;
+    inset: 1px 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 12px;
+    color: #fff;
+    z-index: 1;
+}
+
+/* --- map controls --- */
+.spm-controls {
+    position: absolute;
+    right: 0.75rem;
+    top: 0.75rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.spm-control-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.625rem;
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.spm-control-btn:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.spm-control-btn:active {
+    transform: translateY(0);
+}
+
+.spm-control-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* --- information panel --- */
+.spm-info-panel {
+    position: absolute;
+    left: 0.75rem;
+    top: 0.75rem;
+    z-index: 1000;
+    width: min(16.5rem, calc(100% - 4.5rem));
+    border-radius: 0.75rem;
+    background: rgba(255,255,255,0.96);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    overflow: hidden;
+}
+
+.spm-info-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    background: linear-gradient(to right, #0d5368, #0a4250);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.spm-info-head svg {
+    flex-shrink: 0;
+}
+
+.spm-info-rows {
+    padding: 0.45rem 0.75rem 0.6rem;
+}
+
+.spm-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed #e2e8f0;
+    font-size: 0.72rem;
+}
+
+.spm-info-row:last-child {
+    border-bottom: 0;
+}
+
+.spm-info-label {
+    color: #94a3b8;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.spm-info-value {
+    color: #0f172a;
+    font-weight: 700;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+/* --- status chip --- */
+.spm-status-chip {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.64rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.spm-chip-azure   { background: #e0f2fe; color: #0369a1; }
+.spm-chip-emerald { background: #d1fae5; color: #047857; }
+.spm-chip-red     { background: #fee2e2; color: #b91c1c; }
+.spm-chip-amber   { background: #fef3c7; color: #b45309; }
+
+/* --- legend --- */
+.spm-legend {
+    position: absolute;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.625rem;
+    background: rgba(255,255,255,0.94);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.16);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #334155;
+    max-width: calc(100% - 1.5rem);
+}
+
+.spm-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    line-height: 1.2;
+}
+
+.spm-legend-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* --- stale / live badge states --- */
+.shipment-map-live-badge.spm-stale {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.shipment-map-live-badge.spm-stale .shipment-map-live-dot {
+    background: #f59e0b;
+}
+
+/* --- fullscreen --- */
+.shipment-map-container.spm-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    max-width: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    height: 100vh;
+}
+
+.shipment-map-container.spm-fullscreen #shipment-route-map {
+    height: 100vh;
+    min-height: 100vh;
+}
+
+/* --- responsive --- */
+@media (max-width: 640px) {
+    .spm-controls { right: 0.5rem; top: 0.5rem; gap: 0.3rem; }
+    .spm-control-btn { width: 2rem; height: 2rem; border-radius: 0.5rem; }
+    .spm-control-btn svg { width: 14px; height: 14px; }
+    .spm-info-panel { left: 0.5rem; top: 0.5rem; width: min(15rem, calc(100% - 3.75rem)); }
+    .spm-legend { left: 0.5rem; bottom: 0.5rem; }
+    .spm-info-row, .spm-info-head { font-size: 0.68rem; }
+}
+
 @layer utilities {
     .mask-fade-x {
         -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);

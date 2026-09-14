@@ -225,11 +225,11 @@
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600">Latitude</label>
-                            <input type="number" name="origin_latitude" value="{{ old('origin_latitude', $originAddr['latitude'] ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                            <input type="number" id="origin_lat" name="origin_latitude" value="{{ old('origin_latitude', $originAddr['latitude'] ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600">Longitude</label>
-                            <input type="number" name="origin_longitude" value="{{ old('origin_longitude', $originAddr['longitude'] ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                            <input type="number" id="origin_lng" name="origin_longitude" value="{{ old('origin_longitude', $originAddr['longitude'] ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                         </div>
                     </div>
                     <div class="mt-3">
@@ -242,11 +242,11 @@
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600">Latitude</label>
-                            <input type="number" name="destination_latitude" value="{{ old('destination_latitude', $destAddr['latitude'] ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                            <input type="number" id="dest_lat" name="destination_latitude" value="{{ old('destination_latitude', $destAddr['latitude'] ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600">Longitude</label>
-                            <input type="number" name="destination_longitude" value="{{ old('destination_longitude', $destAddr['longitude'] ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                            <input type="number" id="dest_lng" name="destination_longitude" value="{{ old('destination_longitude', $destAddr['longitude'] ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                         </div>
                     </div>
                     <div class="mt-3">
@@ -261,16 +261,28 @@
                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600">Latitude</label>
-                        <input type="number" name="current_latitude" value="{{ old('current_latitude', $shipment->current_latitude ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                        <input type="number" id="current_lat" name="current_latitude" value="{{ old('current_latitude', $shipment->current_latitude ?? '') }}" step="any" min="-90" max="90" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600">Longitude</label>
-                        <input type="number" name="current_longitude" value="{{ old('current_longitude', $shipment->current_longitude ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                        <input type="number" id="current_lng" name="current_longitude" value="{{ old('current_longitude', $shipment->current_longitude ?? '') }}" step="any" min="-180" max="180" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
                     </div>
                 </div>
                 <div class="mt-3">
                     <label class="block text-xs font-semibold text-slate-600">Location Name</label>
                     <input type="text" name="current_location_name" value="{{ old('current_location_name', $shipment->current_location_name ?? '') }}" maxlength="255" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-azure-500 focus:outline-none">
+                </div>
+            </div>
+            <div class="mt-4">
+                <h4 class="font-semibold text-slate-800">Route Preview</h4>
+                <p class="mt-0.5 text-xs text-slate-500">Preview the route as you enter coordinates. Markers update automatically.</p>
+                <div class="mt-3 overflow-hidden rounded-md border border-slate-200">
+                    <div id="shipment-preview-map" class="h-64 min-h-64 w-full"></div>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
+                    <span class="inline-flex items-center gap-1.5"><span class="spm-legend-dot" style="background:#2563eb"></span>Origin</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="spm-legend-dot" style="background:#dc2626"></span>Current</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="spm-legend-dot" style="background:#059669"></span>Destination</span>
                 </div>
             </div>
 
@@ -316,5 +328,100 @@
             <a href="{{ route('admin.shipments.show', $shipment) }}" class="rounded-md border border-slate-300 px-8 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>
         </div>
     </form>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    (function() {
+        function previewReady(fn) {
+            if (document.readyState !== 'loading') { fn(); } else { document.addEventListener('DOMContentLoaded', fn); }
+        }
+        previewReady(function() {
+            var mapEl = document.getElementById('shipment-preview-map');
+            if (!mapEl || !window.L) return;
+
+            function num(id) {
+                var v = document.getElementById(id).value;
+                if (v === '' || v == null) return null;
+                v = Number(v);
+                return isNaN(v) ? null : v;
+            }
+
+            function pinIcon(type, bg) {
+                var letter = type === 'origin' ? 'O' : 'D';
+                return L.divIcon({
+                    html: '<div class="spm-pin"><div class="spm-pin-bg" style="background:' + bg + '"></div><div class="spm-pin-letter">' + letter + '</div></div>',
+                    className: 'spm-pin-wrapper',
+                    iconSize: [32, 36],
+                    iconAnchor: [16, 34],
+                    popupAnchor: [0, -30]
+                });
+            }
+
+            var map = L.map(mapEl, { zoomControl: true, scrollWheelZoom: true });
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            var originMarker = null, currentMarker = null, destMarker = null, routeLine = null;
+
+            function redraw() {
+                var origin = [num('origin_lat'), num('origin_lng')];
+                var current = [num('current_lat'), num('current_lng')];
+                var dest = [num('dest_lat'), num('dest_lng')];
+                var validOrigin = origin[0] != null && origin[1] != null;
+                var validCurrent = current[0] != null && current[1] != null;
+                var validDest = dest[0] != null && dest[1] != null;
+
+                if (validOrigin) {
+                    if (!originMarker) originMarker = L.marker(origin, { icon: pinIcon('origin', '#2563eb') }).addTo(map);
+                    else originMarker.setLatLng(origin);
+                } else if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
+
+                if (validCurrent) {
+                    if (!currentMarker) {
+                        currentMarker = L.marker(current, {
+                            icon: L.divIcon({
+                                html: '<div class="spm-marker-current"><div class="spm-marker-halo"></div><div class="spm-marker-pulse"></div><div class="spm-marker-dot"></div></div>',
+                                className: 'spm-marker-wrapper', iconSize: [42, 42], iconAnchor: [21, 21]
+                            })
+                        }).addTo(map);
+                    } else currentMarker.setLatLng(current);
+                } else if (currentMarker) { map.removeLayer(currentMarker); currentMarker = null; }
+
+                if (validDest) {
+                    if (!destMarker) destMarker = L.marker(dest, { icon: pinIcon('destination', '#059669') }).addTo(map);
+                    else destMarker.setLatLng(dest);
+                } else if (destMarker) { map.removeLayer(destMarker); destMarker = null; }
+
+                var latLngs = [];
+                if (validOrigin) latLngs.push(origin);
+                if (validCurrent) latLngs.push(current);
+                if (validDest) latLngs.push(dest);
+
+                if (latLngs.length >= 2) {
+                    if (!routeLine) {
+                        routeLine = L.polyline(latLngs, { color: '#1e40af', weight: 4, opacity: 0.8, dashArray: '10, 8', lineCap: 'round' }).addTo(map);
+                    } else {
+                        routeLine.setLatLngs(latLngs).redraw();
+                    }
+                    map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 13 });
+                } else if (latLngs.length === 1) {
+                    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+                    map.setView(latLngs[0], 12);
+                } else {
+                    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+                    map.setView([9.081999, 8.675277], 3);
+                }
+            }
+
+            ['origin_lat', 'origin_lng', 'dest_lat', 'dest_lng', 'current_lat', 'current_lng'].forEach(function(id) {
+                document.getElementById(id).addEventListener('input', redraw);
+            });
+
+            redraw();
+        });
+    })();
+    </script>
 </x-dashboard-shell>
 @endsection
