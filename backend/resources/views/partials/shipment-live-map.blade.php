@@ -41,10 +41,10 @@
 
         {{-- Map + overlays --}}
         <div class="shipment-map-body">
-            <div id="shipment-route-map" @if(!$mapPointSet) style="display:none" @endif></div>
+            <div id="shipment-route-map"></div>
 
             {{-- Map controls --}}
-            <div class="spm-controls" id="spm-controls" @if(!$mapPointSet) style="display:none" @endif>
+            <div class="spm-controls" id="spm-controls">
                 <button type="button" class="spm-control-btn" id="spm-zoom-in" title="Zoom in" aria-label="Zoom in">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
@@ -63,7 +63,7 @@
             </div>
 
             {{-- Information panel --}}
-            <div class="spm-info-panel" id="spm-info-panel" @if(!$mapPointSet) style="display:none" @endif>
+            <div class="spm-info-panel" id="spm-info-panel">
                 <div class="spm-info-head">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                     <span>Shipment Position</span>
@@ -81,18 +81,20 @@
             </div>
 
             {{-- Legend --}}
-            <div class="spm-legend" id="spm-legend" @if(!$mapPointSet) style="display:none" @endif>
+            <div class="spm-legend" id="spm-legend">
                 <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#2563eb"></span>Origin</span>
                 <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#dc2626"></span>Current Location</span>
                 <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#059669"></span>Destination</span>
                 <span class="spm-legend-item"><span class="spm-legend-dot" style="background:#7c3aed"></span>Checkpoint</span>
             </div>
 
-            {{-- Unavailable overlay --}}
-            <div id="map-unavailable" class="shipment-map-unavailable" style="display: {{ $mapPointSet ? 'none' : 'flex' }}">
-                <svg class="shipment-map-unavailable-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
-                <p class="shipment-map-unavailable-title">Shipment location is currently unavailable</p>
-                <p class="shipment-map-unavailable-desc">Showing the latest available information. Tracking details will update when a new location is reported by the operations team.</p>
+            {{-- Unavailable note (does not block the map) --}}
+            <div id="map-unavailable" class="shipment-map-unavailable" style="display: none">
+                <span class="shipment-map-unavailable-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg></span>
+                <span class="shipment-map-unavailable-text">
+                    <span class="shipment-map-unavailable-title">Shipment location is currently unavailable</span>
+                    <span class="shipment-map-unavailable-desc">The map will update automatically when a new location is reported.</span>
+                </span>
             </div>
         </div>
     </div>
@@ -141,11 +143,6 @@
         function showUnavailable(show) {
             if (!unavailableEl) return;
             unavailableEl.style.display = show ? 'flex' : 'none';
-            var hideMap = show && !map;
-            el.style.display = hideMap ? 'none' : 'block';
-            if (controlsEl) controlsEl.style.display = (show && !map) ? 'none' : 'flex';
-            if (panelEl) panelEl.style.display = (show && !map) ? 'none' : 'block';
-            if (legendEl) legendEl.style.display = (show && !map) ? 'none' : 'flex';
         }
 
         /* ---------- Marker icons ---------- */
@@ -388,12 +385,12 @@
 
         /* ---------- Apply points to map ---------- */
         function renderPoints(points) {
+            if (!map) return false;
             if (!points || !points.length) {
-                if (!map) showUnavailable(true);
-                else showUnavailable(false);
+                showUnavailable(true);
                 return false;
             }
-            if (!map) return false;
+            showUnavailable(false);
             syncMarkers(points);
             var latLngs = drawRoute(points);
             return { bounds: boundsOf(latLngs), count: latLngs.length };
@@ -417,7 +414,7 @@
 
         /* ---------- Map init ---------- */
         function initMap(points) {
-            if (map || !el || !points || !points.length) return;
+            if (map || !el) return;
             showUnavailable(false);
 
             map = L.map(el, {
@@ -432,10 +429,12 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            var result = renderPoints(points);
-            if (result && result.count) {
-                fitToRoute(false);
-                didInitialFit = true;
+            if (points && points.length) {
+                var result = renderPoints(points);
+                if (result && result.count) {
+                    fitToRoute(false);
+                    didInitialFit = true;
+                }
             }
 
             map.on('mousedown', function () { isUserInteracting = true; clearTimeout(interactionTimeout); });
@@ -493,12 +492,9 @@
         }
 
         bindControls();
-        if (initialPoints.length) {
-            initMap(initialPoints);
-            updateInfo({ status: statusLabel, status_code: statusCode, current: null });
-        } else {
-            showUnavailable(true);
-        }
+        initMap(initialPoints);
+        updateInfo({ status: statusLabel, status_code: statusCode, current: null });
+        if (!initialPoints.length) showUnavailable(true);
         pollTrackingData();
         setInterval(pollTrackingData, 10000);
 
