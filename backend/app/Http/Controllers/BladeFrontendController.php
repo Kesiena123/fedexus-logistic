@@ -946,7 +946,7 @@ class BladeFrontendController extends Controller
             'shipping_method' => $shippingMethods[array_rand($shippingMethods)],
             'priority' => ['standard', 'standard', 'standard', 'high', 'urgent'][array_rand([0, 1, 2, 3, 4])],
             'estimated_delivery_date' => $estDate->format('Y-m-d'),
-            'description' => 'Auto-generated test shipment - '.ucwords($packageTypes[array_rand($packageTypes)]).' shipment',
+            'description' => 'Auto-generated shipment - '.ucwords($packageTypes[array_rand($packageTypes)]).' shipment',
 
             'package_type' => $packageTypes[array_rand($packageTypes)],
             'package_weight' => $weight,
@@ -954,7 +954,7 @@ class BladeFrontendController extends Controller
             'package_width' => $width,
             'package_height' => $height,
             'package_quantity' => $quantity,
-            'package_description' => 'Test parcel contents - auto-generated for testing',
+            'package_description' => 'Parcel contents - auto-generated',
 
             'shipping_cost' => $baseCost,
             'handling_fee' => round(mt_rand(500, 3000) / 100, 2),
