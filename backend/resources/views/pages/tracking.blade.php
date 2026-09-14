@@ -42,7 +42,10 @@ if ($shipment) {
     $shipmentPriority = $shipment->metadata['priority'] ?? '';
     $shipmentType = $shipment->metadata['shipment_type'] ?? $shipment->metadata['type'] ?? '';
     $shippingMethod = $shipment->metadata['shipping_method'] ?? $shipment->metadata['method'] ?? '';
-    $photoAttachments = ($shipment->attachments ?? collect())->filter(fn($a) => $a->isVisibleOnTracking());
+    $photoAttachments = ($shipment->attachments ?? collect())
+        ->filter(fn($a) => $a->isVisibleOnTracking())
+        ->filter(fn($a) => Storage::disk($a->disk)->exists($a->path))
+        ->values();
 
     $uniqueLocationEvents = $events->values()
         ->filter(function ($event) use ($events) {
