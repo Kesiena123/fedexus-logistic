@@ -1,0 +1,6 @@
+﻿---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/username/public_html
+    - /bin/cp -R backend/public/* \/
+    - /bin/cp -R backend/public/.htaccess \/ 2>/dev/null || true
