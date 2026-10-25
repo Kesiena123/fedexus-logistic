@@ -12,7 +12,11 @@
     "src": "node_modules/leaflet/dist/images/marker-icon.png"
   },
   "resources/css/app.css": {
+<<<<<<< Updated upstream
     "file": "assets/app-CtaaWE6k.css",
+=======
+    "file": "assets/app-BVB6cYjI.css",
+>>>>>>> Stashed changes
     "src": "resources/css/app.css",
     "isEntry": true
   },
